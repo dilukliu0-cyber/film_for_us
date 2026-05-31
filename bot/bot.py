@@ -7,7 +7,7 @@ from dotenv import load_dotenv
 
 load_dotenv()
 
-VERSION = "1.2"  # Версия бота
+VERSION = "1.3"  # Версия бота
 
 TELEGRAM_BOT_TOKEN = os.getenv("TELEGRAM_BOT_TOKEN")
 TMDB_API_KEY = os.getenv("TMDB_API_KEY")
@@ -18,6 +18,11 @@ TMDB_IMAGE_BASE = "https://image.tmdb.org/t/p/w500"
 
 def search_movie_tmdb(query: str):
     """Поиск фильма/сериала в TMDB"""
+    # Определяем тип по ключевым словам
+    query_lower = query.lower()
+    is_anime = any(word in query_lower for word in ['аниме', 'anime'])
+    is_cartoon = any(word in query_lower for word in ['мультик', 'мультфильм', 'cartoon'])
+
     # Сначала ищем в фильмах
     url = f"{TMDB_BASE_URL}/search/movie"
     params = {
@@ -32,9 +37,10 @@ def search_movie_tmdb(query: str):
         data = response.json()
         if data['results']:
             movie = data['results'][0]
+            movie_type = 'anime' if is_anime else ('cartoon' if is_cartoon else 'movie')
             return {
                 'title': movie.get('title', query),
-                'type': 'movie',
+                'type': movie_type,
                 'poster_url': f"{TMDB_IMAGE_BASE}{movie['poster_path']}" if movie.get('poster_path') else None,
                 'tmdb_id': movie['id'],
                 'year': movie.get('release_date', '')[:4] if movie.get('release_date') else None
@@ -48,9 +54,10 @@ def search_movie_tmdb(query: str):
         data = response.json()
         if data['results']:
             show = data['results'][0]
+            movie_type = 'anime' if is_anime else 'tv'
             return {
                 'title': show.get('name', query),
-                'type': 'tv',
+                'type': movie_type,
                 'poster_url': f"{TMDB_IMAGE_BASE}{show['poster_path']}" if show.get('poster_path') else None,
                 'tmdb_id': show['id'],
                 'year': show.get('first_air_date', '')[:4] if show.get('first_air_date') else None
