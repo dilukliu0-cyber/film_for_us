@@ -13,8 +13,10 @@ from database.models import User, Movie, Portfolio
 
 app = FastAPI(title="Movie Bot API")
 
-# Подключаем статические файлы для Mini App
-app.mount("/static", StaticFiles(directory="miniapp/static"), name="static")
+# Подключаем статические файлы для Mini App (если папка существует)
+static_dir = os.path.join(os.path.dirname(os.path.dirname(__file__)), "miniapp", "static")
+if os.path.exists(static_dir):
+    app.mount("/static", StaticFiles(directory=static_dir), name="static")
 
 @app.on_event("startup")
 async def startup():
