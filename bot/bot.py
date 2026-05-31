@@ -7,6 +7,8 @@ from dotenv import load_dotenv
 
 load_dotenv()
 
+VERSION = "1.1"  # Версия бота
+
 TELEGRAM_BOT_TOKEN = os.getenv("TELEGRAM_BOT_TOKEN")
 TMDB_API_KEY = os.getenv("TMDB_API_KEY")
 SERVER_URL = os.getenv("SERVER_URL", "http://localhost:8000")
@@ -76,7 +78,8 @@ async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
         "- Интерстеллар 10\n"
         "- Во все тяжкие 9.5\n"
         "- Атака титанов 10\n\n"
-        "Открой портфолио, чтобы увидеть все свои фильмы с обложками!",
+        "Открой портфолио, чтобы увидеть все свои фильмы с обложками!\n\n"
+        f"Версия бота: {VERSION}",
         reply_markup=reply_markup
     )
 
@@ -164,7 +167,7 @@ def main():
     application.add_handler(CommandHandler("start", start))
     application.add_handler(MessageHandler(filters.TEXT & ~filters.COMMAND, handle_message))
 
-    print("Bot started successfully!")
+    print(f"Bot started successfully! Version: {VERSION}")
     application.run_polling()
 
 if __name__ == "__main__":
