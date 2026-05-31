@@ -3,6 +3,8 @@ from fastapi.staticfiles import StaticFiles
 from fastapi.responses import HTMLResponse, FileResponse
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select
+from pydantic import BaseModel
+from typing import Optional
 import sys
 import os
 
@@ -10,6 +12,15 @@ sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
 from database.database import get_session, init_db
 from database.models import User, Movie, Portfolio
+
+class MovieCreate(BaseModel):
+    user_id: int
+    title: str
+    rating: float
+    movie_type: Optional[str] = None
+    poster_url: Optional[str] = None
+    tmdb_id: Optional[int] = None
+    year: Optional[int] = None
 
 app = FastAPI(title="Movie Bot API")
 
@@ -31,6 +42,31 @@ async def miniapp(user_id: int):
     with open("miniapp/templates/index.html", "r", encoding="utf-8") as f:
         html_content = f.read()
     return HTMLResponse(content=html_content)
+
+@app.post("/api/movies")
+async def create_movie(movie_data: MovieCreate, session: AsyncSession = Depends(get_session)):
+    """Создать новый фильм"""
+    # Создаем или получаем пользователя
+    user = await session.get(User, movie_data.user_id)
+    if not user:
+        user = User(telegram_id=movie_data.user_id)
+        session.add(user)
+        await session.flush()
+
+    # Создаем фильм
+    movie = Movie(
+        user_id=movie_data.user_id,
+        title=movie_data.title,
+        rating=movie_data.rating,
+        movie_type=movie_data.movie_type,
+        poster_url=movie_data.poster_url,
+        tmdb_id=movie_data.tmdb_id,
+        year=movie_data.year
+    )
+    session.add(movie)
+    await session.commit()
+
+    return {"message": "Movie created", "id": movie.id}
 
 @app.get("/api/user/{telegram_id}/movies")
 async def get_user_movies(telegram_id: int, session: AsyncSession = Depends(get_session)):

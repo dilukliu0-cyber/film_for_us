@@ -1,53 +1,82 @@
 import os
 import re
+import requests
 from telegram import Update, InlineKeyboardButton, InlineKeyboardMarkup, WebAppInfo
 from telegram.ext import Application, CommandHandler, MessageHandler, filters, ContextTypes
 from dotenv import load_dotenv
-import sys
-sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
-
-from database.database import async_session
-from database.models import User, Movie
-from tmdb_api import search_movie
 
 load_dotenv()
 
 TELEGRAM_BOT_TOKEN = os.getenv("TELEGRAM_BOT_TOKEN")
+TMDB_API_KEY = os.getenv("TMDB_API_KEY")
 SERVER_URL = os.getenv("SERVER_URL", "http://localhost:8000")
+
+TMDB_BASE_URL = "https://api.themoviedb.org/3"
+TMDB_IMAGE_BASE = "https://image.tmdb.org/t/p/w500"
+
+def search_movie_tmdb(query: str):
+    """Поиск фильма/сериала в TMDB"""
+    # Сначала ищем в фильмах
+    url = f"{TMDB_BASE_URL}/search/movie"
+    params = {
+        "api_key": TMDB_API_KEY,
+        "query": query,
+        "language": "ru-RU"
+    }
+
+    response = requests.get(url, params=params)
+
+    if response.status_code == 200:
+        data = response.json()
+        if data['results']:
+            movie = data['results'][0]
+            return {
+                'title': movie.get('title', query),
+                'type': 'movie',
+                'poster_url': f"{TMDB_IMAGE_BASE}{movie['poster_path']}" if movie.get('poster_path') else None,
+                'tmdb_id': movie['id'],
+                'year': movie.get('release_date', '')[:4] if movie.get('release_date') else None
+            }
+
+    # Если не нашли в фильмах, ищем в сериалах
+    url = f"{TMDB_BASE_URL}/search/tv"
+    response = requests.get(url, params=params)
+
+    if response.status_code == 200:
+        data = response.json()
+        if data['results']:
+            show = data['results'][0]
+            return {
+                'title': show.get('name', query),
+                'type': 'tv',
+                'poster_url': f"{TMDB_IMAGE_BASE}{show['poster_path']}" if show.get('poster_path') else None,
+                'tmdb_id': show['id'],
+                'year': show.get('first_air_date', '')[:4] if show.get('first_air_date') else None
+            }
+
+    return None
 
 async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
     """Команда /start"""
     user = update.effective_user
 
-    # Сохраняем пользователя в БД
-    async with async_session() as session:
-        db_user = await session.get(User, user.id)
-        if not db_user:
-            db_user = User(
-                telegram_id=user.id,
-                username=user.username,
-                first_name=user.first_name
-            )
-            session.add(db_user)
-            await session.commit()
-
     # Кнопка для открытия Mini App
     keyboard = [
         [InlineKeyboardButton(
-            "📱 Открыть портфолио",
+            "Открыть портфолио",
             web_app=WebAppInfo(url=f"{SERVER_URL}/miniapp?user_id={user.id}")
         )]
     ]
     reply_markup = InlineKeyboardMarkup(keyboard)
 
     await update.message.reply_text(
-        f"Привет, {user.first_name}! 👋\n\n"
+        f"Привет, {user.first_name}!\n\n"
         "Я помогу тебе вести портфолио фильмов, сериалов и аниме.\n\n"
-        "📝 Просто напиши название и оценку:\n"
-        "• Интерстеллар 10\n"
-        "• Во все тяжкие 9.5\n"
-        "• Атака титанов 10\n\n"
-        "📱 Открой портфолио, чтобы увидеть все свои фильмы с обложками!",
+        "Просто напиши название и оценку:\n"
+        "- Интерстеллар 10\n"
+        "- Во все тяжкие 9.5\n"
+        "- Атака титанов 10\n\n"
+        "Открой портфолио, чтобы увидеть все свои фильмы с обложками!",
         reply_markup=reply_markup
     )
 
@@ -62,7 +91,7 @@ async def handle_message(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
     if not match:
         await update.message.reply_text(
-            "❌ Не могу распознать формат.\n\n"
+            "Не могу распознать формат.\n\n"
             "Напиши так: Название фильма Оценка\n"
             "Например: Интерстеллар 10"
         )
@@ -72,48 +101,59 @@ async def handle_message(update: Update, context: ContextTypes.DEFAULT_TYPE):
     rating = float(match.group(2))
 
     if rating < 0 or rating > 10:
-        await update.message.reply_text("❌ Оценка должна быть от 0 до 10")
+        await update.message.reply_text("Оценка должна быть от 0 до 10")
         return
 
     # Ищем фильм в TMDB
-    await update.message.reply_text(f"🔍 Ищу '{title}'...")
+    await update.message.reply_text(f"Ищу '{title}'...")
 
-    movie_data = await search_movie(title)
+    movie_data = search_movie_tmdb(title)
 
     if not movie_data:
         await update.message.reply_text(
-            f"❌ Не нашел '{title}' в базе.\n"
+            f"Не нашел '{title}' в базе.\n"
             "Попробуй написать название по-другому или на английском."
         )
         return
 
-    # Сохраняем в БД
-    async with async_session() as session:
-        movie = Movie(
-            user_id=user.id,
-            title=movie_data['title'],
-            rating=rating,
-            movie_type=movie_data['type'],
-            poster_url=movie_data['poster_url'],
-            tmdb_id=movie_data['tmdb_id'],
-            year=movie_data['year']
+    # Отправляем данные на API
+    try:
+        response = requests.post(
+            f"{SERVER_URL}/api/movies",
+            json={
+                "user_id": user.id,
+                "title": movie_data['title'],
+                "rating": rating,
+                "movie_type": movie_data['type'],
+                "poster_url": movie_data['poster_url'],
+                "tmdb_id": movie_data['tmdb_id'],
+                "year": movie_data['year']
+            },
+            timeout=10
         )
-        session.add(movie)
-        await session.commit()
+
+        if response.status_code != 200:
+            await update.message.reply_text("Ошибка при сохранении. Попробуй еще раз.")
+            return
+
+    except Exception as e:
+        print(f"Error saving movie: {e}")
+        await update.message.reply_text("Ошибка при сохранении. Попробуй еще раз.")
+        return
 
     # Кнопка для открытия портфолио
     keyboard = [
         [InlineKeyboardButton(
-            "📱 Открыть портфолио",
+            "Открыть портфолио",
             web_app=WebAppInfo(url=f"{SERVER_URL}/miniapp?user_id={user.id}")
         )]
     ]
     reply_markup = InlineKeyboardMarkup(keyboard)
 
     await update.message.reply_text(
-        f"✅ Добавлено!\n\n"
-        f"🎬 {movie_data['title']} ({movie_data['year']})\n"
-        f"⭐ Твоя оценка: {rating}/10",
+        f"Добавлено!\n\n"
+        f"{movie_data['title']} ({movie_data['year']})\n"
+        f"Твоя оценка: {rating}/10",
         reply_markup=reply_markup
     )
 
