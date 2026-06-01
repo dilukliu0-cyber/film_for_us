@@ -4,10 +4,11 @@ import requests
 from telegram import Update, InlineKeyboardButton, InlineKeyboardMarkup, WebAppInfo
 from telegram.ext import Application, CommandHandler, MessageHandler, filters, ContextTypes
 from dotenv import load_dotenv
+from fuzzywuzzy import fuzz
 
 load_dotenv()
 
-VERSION = "1.4"  # Версия бота
+VERSION = "1.5"  # Версия бота
 
 TELEGRAM_BOT_TOKEN = os.getenv("TELEGRAM_BOT_TOKEN")
 TMDB_API_KEY = os.getenv("TMDB_API_KEY")
@@ -17,7 +18,7 @@ TMDB_BASE_URL = "https://api.themoviedb.org/3"
 TMDB_IMAGE_BASE = "https://image.tmdb.org/t/p/w500"
 
 def search_movie_tmdb(query: str):
-    """Поиск фильма/сериала в TMDB"""
+    """Поиск фильма/сериала в TMDB с нечётким поиском"""
     # Определяем тип по ключевым словам
     query_lower = query.lower()
     is_anime = any(word in query_lower for word in ['аниме', 'anime'])
@@ -32,38 +33,50 @@ def search_movie_tmdb(query: str):
     }
 
     response = requests.get(url, params=params)
+    best_match = None
+    best_score = 0
 
     if response.status_code == 200:
         data = response.json()
         if data['results']:
-            movie = data['results'][0]
-            movie_type = 'anime' if is_anime else ('cartoon' if is_cartoon else 'movie')
-            return {
-                'title': movie.get('title', query),
-                'type': movie_type,
-                'poster_url': f"{TMDB_IMAGE_BASE}{movie['poster_path']}" if movie.get('poster_path') else None,
-                'tmdb_id': movie['id'],
-                'year': movie.get('release_date', '')[:4] if movie.get('release_date') else None
-            }
+            # Используем нечёткий поиск для лучшего совпадения
+            for movie in data['results'][:5]:  # Проверяем топ-5 результатов
+                title = movie.get('title', '')
+                score = fuzz.ratio(query.lower(), title.lower())
+                if score > best_score:
+                    best_score = score
+                    movie_type = 'anime' if is_anime else ('cartoon' if is_cartoon else 'movie')
+                    best_match = {
+                        'title': title,
+                        'type': movie_type,
+                        'poster_url': f"{TMDB_IMAGE_BASE}{movie['poster_path']}" if movie.get('poster_path') else None,
+                        'tmdb_id': movie['id'],
+                        'year': movie.get('release_date', '')[:4] if movie.get('release_date') else None
+                    }
 
-    # Если не нашли в фильмах, ищем в сериалах
-    url = f"{TMDB_BASE_URL}/search/tv"
-    response = requests.get(url, params=params)
+    # Если не нашли в фильмах или низкий score, ищем в сериалах
+    if best_score < 70:
+        url = f"{TMDB_BASE_URL}/search/tv"
+        response = requests.get(url, params=params)
 
-    if response.status_code == 200:
-        data = response.json()
-        if data['results']:
-            show = data['results'][0]
-            movie_type = 'anime' if is_anime else 'tv'
-            return {
-                'title': show.get('name', query),
-                'type': movie_type,
-                'poster_url': f"{TMDB_IMAGE_BASE}{show['poster_path']}" if show.get('poster_path') else None,
-                'tmdb_id': show['id'],
-                'year': show.get('first_air_date', '')[:4] if show.get('first_air_date') else None
-            }
+        if response.status_code == 200:
+            data = response.json()
+            if data['results']:
+                for show in data['results'][:5]:
+                    title = show.get('name', '')
+                    score = fuzz.ratio(query.lower(), title.lower())
+                    if score > best_score:
+                        best_score = score
+                        movie_type = 'anime' if is_anime else 'tv'
+                        best_match = {
+                            'title': title,
+                            'type': movie_type,
+                            'poster_url': f"{TMDB_IMAGE_BASE}{show['poster_path']}" if show.get('poster_path') else None,
+                            'tmdb_id': show['id'],
+                            'year': show.get('first_air_date', '')[:4] if show.get('first_air_date') else None
+                        }
 
-    return None
+    return best_match
 
 async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
     """Команда /start"""
