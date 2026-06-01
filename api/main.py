@@ -45,7 +45,7 @@ async def root():
 @app.get("/miniapp")
 async def miniapp(user_id: int):
     """Отдаем новый Mini App"""
-    with open("miniapp/templates/index_new.html", "r", encoding="utf-8") as f:
+    with open("miniapp/templates/index.html", "r", encoding="utf-8") as f:
         html_content = f.read()
     return HTMLResponse(content=html_content)
 

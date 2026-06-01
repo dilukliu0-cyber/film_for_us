@@ -16,11 +16,98 @@
             font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
             background: var(--tg-theme-bg-color, #ffffff);
             color: var(--tg-theme-text-color, #000000);
+            padding-bottom: 60px;
         }
 
+        /* Поиск */
+        .search-container {
+            position: sticky;
+            top: 0;
+            background: var(--tg-theme-bg-color, #ffffff);
+            padding: 12px 16px;
+            border-bottom: 1px solid var(--tg-theme-secondary-bg-color, #f0f0f0);
+            z-index: 100;
+        }
+
+        .search-box {
+            position: relative;
+        }
+
+        .search-input {
+            width: 100%;
+            padding: 12px 16px;
+            border: 1px solid var(--tg-theme-secondary-bg-color, #e0e0e0);
+            border-radius: 12px;
+            font-size: 16px;
+            background: var(--tg-theme-secondary-bg-color, #f5f5f5);
+            color: var(--tg-theme-text-color, #000000);
+        }
+
+        .search-results {
+            position: absolute;
+            top: 100%;
+            left: 0;
+            right: 0;
+            background: var(--tg-theme-bg-color, #ffffff);
+            border: 1px solid var(--tg-theme-secondary-bg-color, #e0e0e0);
+            border-radius: 12px;
+            margin-top: 8px;
+            max-height: 400px;
+            overflow-y: auto;
+            display: none;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+        }
+
+        .search-results.active {
+            display: block;
+        }
+
+        .search-item {
+            display: flex;
+            gap: 12px;
+            padding: 12px;
+            cursor: pointer;
+            border-bottom: 1px solid var(--tg-theme-secondary-bg-color, #f0f0f0);
+        }
+
+        .search-item:hover {
+            background: var(--tg-theme-secondary-bg-color, #f5f5f5);
+        }
+
+        .search-item:last-child {
+            border-bottom: none;
+        }
+
+        .search-poster {
+            width: 50px;
+            height: 75px;
+            object-fit: cover;
+            border-radius: 8px;
+            background: #ddd;
+        }
+
+        .search-info {
+            flex: 1;
+        }
+
+        .search-title {
+            font-weight: 600;
+            margin-bottom: 4px;
+        }
+
+        .search-year {
+            font-size: 14px;
+            opacity: 0.6;
+        }
+
+        /* Табы */
         .main-tabs {
             display: flex;
             border-bottom: 2px solid var(--tg-theme-secondary-bg-color, #f0f0f0);
+            background: var(--tg-theme-bg-color, #ffffff);
+            position: sticky;
+            top: 65px;
+            z-index: 99;
         }
 
         .main-tab {
@@ -38,67 +125,9 @@
             color: var(--tg-theme-button-color, #3390ec);
         }
 
-        .header {
-            padding: 16px;
-        }
-
-        .header h1 {
-            font-size: 24px;
-            font-weight: 700;
-            margin-bottom: 12px;
-        }
-
-        .filter-tabs {
-            display: flex;
-            gap: 8px;
-            overflow-x: auto;
-            padding-bottom: 8px;
-        }
-
-        .filter-tab {
-            padding: 8px 16px;
-            border-radius: 20px;
-            background: var(--tg-theme-secondary-bg-color, #f0f0f0);
-            cursor: pointer;
-            white-space: nowrap;
-            font-size: 14px;
-            transition: all 0.2s;
-        }
-
-        .filter-tab.active {
-            background: var(--tg-theme-button-color, #3390ec);
-            color: white;
-        }
-
-        .stats {
-            display: flex;
-            gap: 12px;
-            padding: 16px;
-            flex-wrap: wrap;
-        }
-
-        .stat-card {
-            background: var(--tg-theme-secondary-bg-color, #f0f0f0);
-            padding: 12px 16px;
-            border-radius: 12px;
-            flex: 1;
-            min-width: 100px;
-        }
-
-        .stat-value {
-            font-size: 24px;
-            font-weight: 700;
-            color: var(--tg-theme-button-color, #3390ec);
-        }
-
-        .stat-label {
-            font-size: 12px;
-            opacity: 0.6;
-            margin-top: 4px;
-        }
-
+        /* Контент */
         .content {
-            padding: 0 16px 16px;
+            padding: 16px;
         }
 
         .movies-grid {
@@ -145,117 +174,279 @@
             color: var(--tg-theme-button-color, #3390ec);
         }
 
-        .movie-year {
-            font-size: 12px;
-            opacity: 0.6;
+        /* Модальное окно для серий */
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0,0,0,0.5);
+            z-index: 1000;
+            overflow-y: auto;
         }
 
-        .shared-section {
-            padding: 16px;
+        .modal.active {
+            display: block;
         }
 
-        .share-btn {
-            padding: 16px;
-            background: var(--tg-theme-button-color, #3390ec);
-            color: white;
-            border: none;
-            border-radius: 12px;
+        .modal-content {
+            background: var(--tg-theme-bg-color, #ffffff);
+            margin: 20px;
+            border-radius: 16px;
+            padding: 20px;
+        }
+
+        .modal-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+        }
+
+        .modal-title {
+            font-size: 20px;
+            font-weight: 700;
+        }
+
+        .close-btn {
+            font-size: 24px;
             cursor: pointer;
-            width: 100%;
-            font-size: 16px;
+            padding: 4px 8px;
+        }
+
+        .episodes-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(60px, 1fr));
+            gap: 8px;
+            margin-top: 16px;
+        }
+
+        .episode-box {
+            aspect-ratio: 1;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: 8px;
+            cursor: pointer;
             font-weight: 600;
-            margin-bottom: 16px;
+            transition: transform 0.2s;
+            border: 2px solid transparent;
         }
 
-        .shared-link {
-            background: var(--tg-theme-secondary-bg-color, #f0f0f0);
+        .episode-box:active {
+            transform: scale(0.9);
+        }
+
+        .episode-box.unrated {
+            background: var(--tg-theme-secondary-bg-color, #e0e0e0);
+            color: var(--tg-theme-text-color, #000);
+        }
+
+        .episode-box.bad {
+            background: #ff4444;
+            color: white;
+        }
+
+        .episode-box.poor {
+            background: #ff8844;
+            color: white;
+        }
+
+        .episode-box.okay {
+            background: #ffbb44;
+            color: white;
+        }
+
+        .episode-box.good {
+            background: #88cc44;
+            color: white;
+        }
+
+        .episode-box.great {
+            background: #44cc44;
+            color: white;
+        }
+
+        .rating-selector {
+            display: flex;
+            gap: 8px;
+            margin-top: 16px;
             padding: 16px;
+            background: var(--tg-theme-secondary-bg-color, #f5f5f5);
             border-radius: 12px;
-            margin-bottom: 16px;
-            word-break: break-all;
         }
 
-        .loading {
+        .rating-option {
+            flex: 1;
+            padding: 12px;
+            border-radius: 8px;
             text-align: center;
-            padding: 40px;
-            font-size: 18px;
-            opacity: 0.6;
+            cursor: pointer;
+            font-weight: 600;
+            transition: transform 0.2s;
         }
 
-        .empty {
-            text-align: center;
-            padding: 60px 20px;
-        }
-
-        .empty-icon {
-            font-size: 64px;
-            margin-bottom: 16px;
-        }
-
-        .empty-text {
-            font-size: 18px;
-            opacity: 0.6;
+        .rating-option:active {
+            transform: scale(0.95);
         }
 
         .hidden {
             display: none;
         }
+
+        .empty {
+            text-align: center;
+            padding: 60px 20px;
+            opacity: 0.6;
+        }
+
+        .loading {
+            text-align: center;
+            padding: 40px;
+            opacity: 0.6;
+        }
+
+        /* Карточка фильма для оценки */
+        .movie-details {
+            margin-bottom: 20px;
+        }
+
+        .movie-poster-large {
+            width: 100%;
+            max-width: 300px;
+            border-radius: 12px;
+            margin: 0 auto 16px;
+            display: block;
+        }
+
+        .movie-meta {
+            margin-bottom: 16px;
+        }
+
+        .movie-director {
+            font-size: 14px;
+            opacity: 0.7;
+            margin-bottom: 8px;
+        }
+
+        .movie-overview {
+            font-size: 14px;
+            line-height: 1.5;
+            margin-bottom: 16px;
+            opacity: 0.8;
+        }
+
+        .stars-rating {
+            display: flex;
+            gap: 8px;
+            justify-content: center;
+            margin: 20px 0;
+        }
+
+        .star {
+            font-size: 32px;
+            cursor: pointer;
+            transition: transform 0.2s;
+            user-select: none;
+        }
+
+        .star:active {
+            transform: scale(0.9);
+        }
+
+        .star.filled {
+            color: #ffd700;
+        }
+
+        .star.empty {
+            color: #ddd;
+        }
+
+        .review-input {
+            width: 100%;
+            min-height: 100px;
+            padding: 12px;
+            border: 1px solid var(--tg-theme-secondary-bg-color, #e0e0e0);
+            border-radius: 12px;
+            font-size: 14px;
+            font-family: inherit;
+            background: var(--tg-theme-secondary-bg-color, #f5f5f5);
+            color: var(--tg-theme-text-color, #000);
+            resize: vertical;
+            margin-bottom: 16px;
+        }
+
+        .save-btn {
+            width: 100%;
+            padding: 16px;
+            background: var(--tg-theme-button-color, #3390ec);
+            color: white;
+            border: none;
+            border-radius: 12px;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: opacity 0.2s;
+        }
+
+        .save-btn:active {
+            opacity: 0.8;
+        }
+
+        .rating-display {
+            text-align: center;
+            font-size: 18px;
+            font-weight: 600;
+            color: var(--tg-theme-button-color, #3390ec);
+            margin-bottom: 16px;
+        }
     </style>
 </head>
 <body>
+    <!-- Поиск -->
+    <div class="search-container">
+        <div class="search-box">
+            <input type="text" class="search-input" placeholder="Поиск фильмов..." id="searchInput">
+            <div class="search-results" id="searchResults"></div>
+        </div>
+    </div>
+
+    <!-- Табы -->
     <div class="main-tabs">
-        <div class="main-tab active" onclick="switchMainTab('my')">Мое портфолио</div>
-        <div class="main-tab" onclick="switchMainTab('shared')">Общее портфолио</div>
+        <div class="main-tab active" onclick="switchTab('my')">Мое</div>
+        <div class="main-tab" onclick="switchTab('coming')">Еще выйдет</div>
     </div>
 
-    <!-- Мое портфолио -->
-    <div id="my-portfolio">
-        <div class="header">
-            <h1>Мое портфолио</h1>
-            <div class="filter-tabs">
-                <div class="filter-tab active" onclick="filterMovies('all')">Все</div>
-                <div class="filter-tab" onclick="filterMovies('movie')">Фильмы</div>
-                <div class="filter-tab" onclick="filterMovies('tv')">Сериалы</div>
-                <div class="filter-tab" onclick="filterMovies('anime')">Аниме</div>
-                <div class="filter-tab" onclick="filterMovies('cartoon')">Мультики</div>
-            </div>
-        </div>
+    <!-- Контент -->
+    <div id="myTab" class="content">
+        <div class="loading">Загрузка...</div>
+    </div>
 
-        <div class="stats" id="stats">
-            <div class="stat-card">
-                <div class="stat-value" id="total">0</div>
-                <div class="stat-label">Всего</div>
-            </div>
-            <div class="stat-card">
-                <div class="stat-value" id="avgRating">0</div>
-                <div class="stat-label">Средняя оценка</div>
-            </div>
-        </div>
+    <div id="comingTab" class="content hidden">
+        <div class="empty">Здесь будут фильмы и сериалы<br>которые еще выйдут</div>
+    </div>
 
-        <div class="content" id="content">
-            <div class="loading">Загрузка...</div>
+    <!-- Модальное окно для серий -->
+    <div class="modal" id="episodesModal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <div class="modal-title" id="modalTitle"></div>
+                <div class="close-btn" onclick="closeModal()">&times;</div>
+            </div>
+            <div id="episodesContainer"></div>
         </div>
     </div>
 
-    <!-- Общее портфолио -->
-    <div id="shared-portfolio" class="hidden">
-        <div class="shared-section">
-            <h1 style="margin-bottom: 16px;">Общее портфолио</h1>
-            <p style="opacity: 0.6; margin-bottom: 16px;">Создайте ссылку и отправьте другу. Вы сможете вместе смотреть и добавлять фильмы!</p>
-
-            <button class="share-btn" onclick="createSharedPortfolio()">Создать общее портфолио</button>
-
-            <div id="shared-link-container" class="hidden">
-                <div class="shared-link" id="shared-link"></div>
-                <button class="share-btn" onclick="sendSharedLink()">Отправить ссылку</button>
+    <!-- Модальное окно для оценки фильма -->
+    <div class="modal" id="movieRatingModal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <div class="modal-title" id="ratingModalTitle"></div>
+                <div class="close-btn" onclick="closeRatingModal()">&times;</div>
             </div>
-
-            <div id="shared-content">
-                <div class="empty">
-                    <div class="empty-icon">👥</div>
-                    <div class="empty-text">Создайте общее портфолио<br>чтобы смотреть фильмы вместе!</div>
-                </div>
-            </div>
+            <div class="movie-details" id="movieDetailsContainer"></div>
         </div>
     </div>
 
@@ -267,111 +458,294 @@
         const urlParams = new URLSearchParams(window.location.search);
         const userId = urlParams.get('user_id');
         let allMovies = [];
-        let currentFilter = 'all';
-        let currentMainTab = 'my';
+        let searchTimeout = null;
+        let currentMovie = null;
 
-        function switchMainTab(tab) {
-            currentMainTab = tab;
-
-            // Обновляем активную главную вкладку
+        // Переключение табов
+        function switchTab(tab) {
             document.querySelectorAll('.main-tab').forEach(t => t.classList.remove('active'));
             event.target.classList.add('active');
 
-            // Показываем нужный контент
             if (tab === 'my') {
-                document.getElementById('my-portfolio').classList.remove('hidden');
-                document.getElementById('shared-portfolio').classList.add('hidden');
+                document.getElementById('myTab').classList.remove('hidden');
+                document.getElementById('comingTab').classList.add('hidden');
             } else {
-                document.getElementById('my-portfolio').classList.add('hidden');
-                document.getElementById('shared-portfolio').classList.remove('hidden');
+                document.getElementById('myTab').classList.add('hidden');
+                document.getElementById('comingTab').classList.remove('hidden');
             }
         }
 
-        async function loadMovies() {
-            try {
-                const moviesResponse = await fetch(`/api/user/${userId}/movies`);
-                const moviesData = await moviesResponse.json();
+        // Поиск фильмов
+        document.getElementById('searchInput').addEventListener('input', (e) => {
+            const query = e.target.value.trim();
 
-                const statsResponse = await fetch(`/api/user/${userId}/stats`);
-                const statsData = await statsResponse.json();
+            if (searchTimeout) clearTimeout(searchTimeout);
 
-                document.getElementById('total').textContent = statsData.total;
-                document.getElementById('avgRating').textContent = statsData.average_rating;
-
-                allMovies = moviesData.movies;
-                displayMovies(allMovies);
-
-            } catch (error) {
-                console.error('Error loading movies:', error);
-                document.getElementById('content').innerHTML = `
-                    <div class="empty">
-                        <div class="empty-text">Ошибка загрузки</div>
-                    </div>
-                `;
-            }
-        }
-
-        function filterMovies(type) {
-            currentFilter = type;
-
-            // Обновляем активную вкладку фильтра
-            document.querySelectorAll('.filter-tab').forEach(tab => {
-                tab.classList.remove('active');
-            });
-            event.target.classList.add('active');
-
-            // Фильтруем фильмы
-            let filtered = allMovies;
-            if (type !== 'all') {
-                filtered = allMovies.filter(m => m.type === type);
-            }
-
-            displayMovies(filtered);
-        }
-
-        function displayMovies(movies) {
-            const content = document.getElementById('content');
-
-            if (movies.length === 0) {
-                content.innerHTML = `
-                    <div class="empty">
-                        <div class="empty-icon">🎬</div>
-                        <div class="empty-text">Пока нет фильмов<br>Добавь первый через бота!</div>
-                    </div>
-                `;
+            if (query.length < 2) {
+                document.getElementById('searchResults').classList.remove('active');
                 return;
             }
 
-            const moviesHTML = movies.map(movie => `
-                <div class="movie-card" onclick="showMovie(${movie.id})">
-                    <img class="movie-poster"
-                         src="${movie.poster_url || '/static/no-poster.png'}"
-                         alt="${movie.title}"
-                         onerror="this.src='/static/no-poster.png'">
-                    <div class="movie-info">
-                        <div class="movie-title">${movie.title}</div>
-                        <div class="movie-rating">⭐ ${movie.rating}/10</div>
-                        ${movie.year ? `<div class="movie-year">${movie.year}</div>` : ''}
-                    </div>
-                </div>
-            `).join('');
+            searchTimeout = setTimeout(() => searchMovies(query), 300);
+        });
 
-            content.innerHTML = `<div class="movies-grid">${moviesHTML}</div>`;
+        async function searchMovies(query) {
+            try {
+                const response = await fetch(`/api/search?query=${encodeURIComponent(query)}`);
+                const data = await response.json();
+
+                const resultsDiv = document.getElementById('searchResults');
+
+                if (data.results && data.results.length > 0) {
+                    resultsDiv.innerHTML = data.results.map(movie => `
+                        <div class="search-item" onclick="addMovie(${movie.tmdb_id}, '${movie.type}')">
+                            <img class="search-poster"
+                                 src="${movie.poster_url || '/static/no-poster.png'}"
+                                 onerror="this.src='/static/no-poster.png'">
+                            <div class="search-info">
+                                <div class="search-title">${movie.title}</div>
+                                <div class="search-year">${movie.year || ''}</div>
+                            </div>
+                        </div>
+                    `).join('');
+                    resultsDiv.classList.add('active');
+                } else {
+                    resultsDiv.innerHTML = '<div class="empty">Ничего не найдено</div>';
+                    resultsDiv.classList.add('active');
+                }
+            } catch (error) {
+                console.error('Search error:', error);
+            }
+        }
+
+        async function addMovie(tmdbId, type) {
+            document.getElementById('searchResults').classList.remove('active');
+            document.getElementById('searchInput').value = '';
+
+            // Если это сериал - открываем модалку с сезонами/сериями
+            if (type === 'tv') {
+                await loadEpisodes(tmdbId);
+            } else {
+                // Для фильма открываем карточку с оценкой
+                await loadMovieDetails(tmdbId);
+            }
+        }
+
+        async function loadMovieDetails(tmdbId) {
+            try {
+                const response = await fetch(`/api/movie-details/${tmdbId}`);
+                const data = await response.json();
+
+                currentMovie = data;
+                document.getElementById('ratingModalTitle').textContent = data.title;
+
+                const container = document.getElementById('movieDetailsContainer');
+                container.innerHTML = `
+                    <img class="movie-poster-large"
+                         src="${data.poster_url || '/static/no-poster.png'}"
+                         onerror="this.src='/static/no-poster.png'">
+
+                    <div class="movie-meta">
+                        ${data.director ? `<div class="movie-director">Режиссер: ${data.director}</div>` : ''}
+                        ${data.year ? `<div class="movie-director">Год: ${data.year}</div>` : ''}
+                    </div>
+
+                    ${data.overview ? `<div class="movie-overview">${data.overview}</div>` : ''}
+
+                    <div class="rating-display">Оценка: <span id="currentRating">0</span>/10</div>
+
+                    <div class="stars-rating" id="starsContainer">
+                        ${Array.from({length: 10}, (_, i) => `
+                            <span class="star empty" data-rating="${i + 1}" onclick="setRating(${i + 1})">★</span>
+                        `).join('')}
+                    </div>
+
+                    <textarea class="review-input"
+                              id="reviewText"
+                              placeholder="Напиши отзыв (необязательно)..."></textarea>
+
+                    <button class="save-btn" onclick="saveMovieRating()">Сохранить</button>
+                `;
+
+                document.getElementById('movieRatingModal').classList.add('active');
+            } catch (error) {
+                console.error('Load movie details error:', error);
+            }
+        }
+
+        function setRating(rating) {
+            document.getElementById('currentRating').textContent = rating;
+
+            const stars = document.querySelectorAll('.star');
+            stars.forEach((star, index) => {
+                if (index < rating) {
+                    star.classList.remove('empty');
+                    star.classList.add('filled');
+                } else {
+                    star.classList.remove('filled');
+                    star.classList.add('empty');
+                }
+            });
+        }
+
+        async function saveMovieRating() {
+            const rating = parseInt(document.getElementById('currentRating').textContent);
+            const review = document.getElementById('reviewText').value;
+
+            if (rating === 0) {
+                tg.showAlert('Поставь оценку!');
+                return;
+            }
+
+            try {
+                await fetch('/api/movies', {
+                    method: 'POST',
+                    headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify({
+                        user_id: userId,
+                        title: currentMovie.title,
+                        rating: rating,
+                        movie_type: 'movie',
+                        poster_url: currentMovie.poster_url,
+                        tmdb_id: currentMovie.tmdb_id,
+                        year: currentMovie.year,
+                        review: review
+                    })
+                });
+
+                closeRatingModal();
+                tg.showAlert('Фильм добавлен!');
+                loadMovies(); // Перезагружаем список
+            } catch (error) {
+                console.error('Save movie error:', error);
+                tg.showAlert('Ошибка при сохранении');
+            }
+        }
+
+        function closeRatingModal() {
+            document.getElementById('movieRatingModal').classList.remove('active');
+        }
+
+        async function loadEpisodes(tmdbId) {
+            try {
+                const response = await fetch(`/api/episodes/${tmdbId}`);
+                const data = await response.json();
+
+                currentMovie = data;
+                document.getElementById('modalTitle').textContent = data.title;
+
+                const container = document.getElementById('episodesContainer');
+                container.innerHTML = data.seasons.map(season => `
+                    <div style="margin-bottom: 24px;">
+                        <h3 style="margin-bottom: 12px;">Сезон ${season.season_number}</h3>
+                        <div class="episodes-grid">
+                            ${Array.from({length: season.episode_count}, (_, i) => `
+                                <div class="episode-box unrated"
+                                     data-season="${season.season_number}"
+                                     data-episode="${i + 1}"
+                                     onclick="rateEpisode(${season.season_number}, ${i + 1})">
+                                    ${i + 1}
+                                </div>
+                            `).join('')}
+                        </div>
+                    </div>
+                `).join('');
+
+                document.getElementById('episodesModal').classList.add('active');
+            } catch (error) {
+                console.error('Load episodes error:', error);
+            }
+        }
+
+        function rateEpisode(season, episode) {
+            const box = document.querySelector(`[data-season="${season}"][data-episode="${episode}"]`);
+
+            // Циклически меняем оценку: unrated -> bad -> poor -> okay -> good -> great -> unrated
+            const ratings = ['unrated', 'bad', 'poor', 'okay', 'good', 'great'];
+            let currentIndex = 0;
+
+            for (let i = 0; i < ratings.length; i++) {
+                if (box.classList.contains(ratings[i])) {
+                    currentIndex = i;
+                    box.classList.remove(ratings[i]);
+                    break;
+                }
+            }
+
+            const nextIndex = (currentIndex + 1) % ratings.length;
+            box.classList.add(ratings[nextIndex]);
+
+            // Сохраняем оценку
+            saveEpisodeRating(season, episode, nextIndex);
+        }
+
+        async function saveEpisodeRating(season, episode, rating) {
+            try {
+                await fetch('/api/episode-rating', {
+                    method: 'POST',
+                    headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify({
+                        user_id: userId,
+                        tmdb_id: currentMovie.tmdb_id,
+                        season,
+                        episode,
+                        rating
+                    })
+                });
+            } catch (error) {
+                console.error('Save rating error:', error);
+            }
+        }
+
+        function closeModal() {
+            document.getElementById('episodesModal').classList.remove('active');
+        }
+
+        // Загрузка портфолио
+        async function loadMovies() {
+            try {
+                const response = await fetch(`/api/user/${userId}/movies`);
+                const data = await response.json();
+
+                allMovies = data.movies;
+                displayMovies(allMovies);
+            } catch (error) {
+                console.error('Load movies error:', error);
+            }
+        }
+
+        function displayMovies(movies) {
+            const container = document.getElementById('myTab');
+
+            if (movies.length === 0) {
+                container.innerHTML = '<div class="empty">Пока нет фильмов<br>Найди через поиск!</div>';
+                return;
+            }
+
+            const html = `
+                <div class="movies-grid">
+                    ${movies.map(movie => `
+                        <div class="movie-card" onclick="showMovie(${movie.id})">
+                            <img class="movie-poster"
+                                 src="${movie.poster_url || '/static/no-poster.png'}"
+                                 onerror="this.src='/static/no-poster.png'">
+                            <div class="movie-info">
+                                <div class="movie-title">${movie.title}</div>
+                                <div class="movie-rating">⭐ ${movie.rating}/10</div>
+                            </div>
+                        </div>
+                    `).join('')}
+                </div>
+            `;
+
+            container.innerHTML = html;
         }
 
         function showMovie(movieId) {
-            tg.showAlert(`Фильм ID: ${movieId}`);
-        }
-
-        function createSharedPortfolio() {
-            const shareUrl = `https://t.me/share/url?url=${encodeURIComponent(window.location.origin + '/shared?user=' + userId)}`;
-            document.getElementById('shared-link').textContent = shareUrl;
-            document.getElementById('shared-link-container').classList.remove('hidden');
-        }
-
-        function sendSharedLink() {
-            const shareUrl = `${window.location.origin}/shared?user=${userId}`;
-            tg.openTelegramLink(`https://t.me/share/url?url=${encodeURIComponent(shareUrl)}&text=${encodeURIComponent('Смотри мое портфолио фильмов!')}`);
+            const movie = allMovies.find(m => m.id === movieId);
+            if (movie && movie.type === 'tv') {
+                loadEpisodes(movie.tmdb_id);
+            }
         }
 
         loadMovies();

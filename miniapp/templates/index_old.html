@@ -1,0 +1,380 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Портфолио фильмов</title>
+    <script src="https://telegram.org/js/telegram-web-app.js"></script>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: var(--tg-theme-bg-color, #ffffff);
+            color: var(--tg-theme-text-color, #000000);
+        }
+
+        .main-tabs {
+            display: flex;
+            border-bottom: 2px solid var(--tg-theme-secondary-bg-color, #f0f0f0);
+        }
+
+        .main-tab {
+            flex: 1;
+            padding: 16px;
+            text-align: center;
+            font-weight: 600;
+            cursor: pointer;
+            border-bottom: 3px solid transparent;
+            transition: all 0.2s;
+        }
+
+        .main-tab.active {
+            border-bottom-color: var(--tg-theme-button-color, #3390ec);
+            color: var(--tg-theme-button-color, #3390ec);
+        }
+
+        .header {
+            padding: 16px;
+        }
+
+        .header h1 {
+            font-size: 24px;
+            font-weight: 700;
+            margin-bottom: 12px;
+        }
+
+        .filter-tabs {
+            display: flex;
+            gap: 8px;
+            overflow-x: auto;
+            padding-bottom: 8px;
+        }
+
+        .filter-tab {
+            padding: 8px 16px;
+            border-radius: 20px;
+            background: var(--tg-theme-secondary-bg-color, #f0f0f0);
+            cursor: pointer;
+            white-space: nowrap;
+            font-size: 14px;
+            transition: all 0.2s;
+        }
+
+        .filter-tab.active {
+            background: var(--tg-theme-button-color, #3390ec);
+            color: white;
+        }
+
+        .stats {
+            display: flex;
+            gap: 12px;
+            padding: 16px;
+            flex-wrap: wrap;
+        }
+
+        .stat-card {
+            background: var(--tg-theme-secondary-bg-color, #f0f0f0);
+            padding: 12px 16px;
+            border-radius: 12px;
+            flex: 1;
+            min-width: 100px;
+        }
+
+        .stat-value {
+            font-size: 24px;
+            font-weight: 700;
+            color: var(--tg-theme-button-color, #3390ec);
+        }
+
+        .stat-label {
+            font-size: 12px;
+            opacity: 0.6;
+            margin-top: 4px;
+        }
+
+        .content {
+            padding: 0 16px 16px;
+        }
+
+        .movies-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
+            gap: 16px;
+        }
+
+        .movie-card {
+            background: var(--tg-theme-secondary-bg-color, #f0f0f0);
+            border-radius: 12px;
+            overflow: hidden;
+            cursor: pointer;
+            transition: transform 0.2s;
+        }
+
+        .movie-card:active {
+            transform: scale(0.95);
+        }
+
+        .movie-poster {
+            width: 100%;
+            aspect-ratio: 2/3;
+            object-fit: cover;
+            background: #ddd;
+        }
+
+        .movie-info {
+            padding: 12px;
+        }
+
+        .movie-title {
+            font-size: 14px;
+            font-weight: 600;
+            margin-bottom: 4px;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+        }
+
+        .movie-rating {
+            font-size: 16px;
+            font-weight: 700;
+            color: var(--tg-theme-button-color, #3390ec);
+        }
+
+        .movie-year {
+            font-size: 12px;
+            opacity: 0.6;
+        }
+
+        .shared-section {
+            padding: 16px;
+        }
+
+        .share-btn {
+            padding: 16px;
+            background: var(--tg-theme-button-color, #3390ec);
+            color: white;
+            border: none;
+            border-radius: 12px;
+            cursor: pointer;
+            width: 100%;
+            font-size: 16px;
+            font-weight: 600;
+            margin-bottom: 16px;
+        }
+
+        .shared-link {
+            background: var(--tg-theme-secondary-bg-color, #f0f0f0);
+            padding: 16px;
+            border-radius: 12px;
+            margin-bottom: 16px;
+            word-break: break-all;
+        }
+
+        .loading {
+            text-align: center;
+            padding: 40px;
+            font-size: 18px;
+            opacity: 0.6;
+        }
+
+        .empty {
+            text-align: center;
+            padding: 60px 20px;
+        }
+
+        .empty-icon {
+            font-size: 64px;
+            margin-bottom: 16px;
+        }
+
+        .empty-text {
+            font-size: 18px;
+            opacity: 0.6;
+        }
+
+        .hidden {
+            display: none;
+        }
+    </style>
+</head>
+<body>
+    <div class="main-tabs">
+        <div class="main-tab active" onclick="switchMainTab('my')">Мое портфолио</div>
+        <div class="main-tab" onclick="switchMainTab('shared')">Общее портфолио</div>
+    </div>
+
+    <!-- Мое портфолио -->
+    <div id="my-portfolio">
+        <div class="header">
+            <h1>Мое портфолио</h1>
+            <div class="filter-tabs">
+                <div class="filter-tab active" onclick="filterMovies('all')">Все</div>
+                <div class="filter-tab" onclick="filterMovies('movie')">Фильмы</div>
+                <div class="filter-tab" onclick="filterMovies('tv')">Сериалы</div>
+                <div class="filter-tab" onclick="filterMovies('anime')">Аниме</div>
+                <div class="filter-tab" onclick="filterMovies('cartoon')">Мультики</div>
+            </div>
+        </div>
+
+        <div class="stats" id="stats">
+            <div class="stat-card">
+                <div class="stat-value" id="total">0</div>
+                <div class="stat-label">Всего</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-value" id="avgRating">0</div>
+                <div class="stat-label">Средняя оценка</div>
+            </div>
+        </div>
+
+        <div class="content" id="content">
+            <div class="loading">Загрузка...</div>
+        </div>
+    </div>
+
+    <!-- Общее портфолио -->
+    <div id="shared-portfolio" class="hidden">
+        <div class="shared-section">
+            <h1 style="margin-bottom: 16px;">Общее портфолио</h1>
+            <p style="opacity: 0.6; margin-bottom: 16px;">Создайте ссылку и отправьте другу. Вы сможете вместе смотреть и добавлять фильмы!</p>
+
+            <button class="share-btn" onclick="createSharedPortfolio()">Создать общее портфолио</button>
+
+            <div id="shared-link-container" class="hidden">
+                <div class="shared-link" id="shared-link"></div>
+                <button class="share-btn" onclick="sendSharedLink()">Отправить ссылку</button>
+            </div>
+
+            <div id="shared-content">
+                <div class="empty">
+                    <div class="empty-icon">👥</div>
+                    <div class="empty-text">Создайте общее портфолио<br>чтобы смотреть фильмы вместе!</div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const tg = window.Telegram.WebApp;
+        tg.expand();
+        tg.ready();
+
+        const urlParams = new URLSearchParams(window.location.search);
+        const userId = urlParams.get('user_id');
+        let allMovies = [];
+        let currentFilter = 'all';
+        let currentMainTab = 'my';
+
+        function switchMainTab(tab) {
+            currentMainTab = tab;
+
+            // Обновляем активную главную вкладку
+            document.querySelectorAll('.main-tab').forEach(t => t.classList.remove('active'));
+            event.target.classList.add('active');
+
+            // Показываем нужный контент
+            if (tab === 'my') {
+                document.getElementById('my-portfolio').classList.remove('hidden');
+                document.getElementById('shared-portfolio').classList.add('hidden');
+            } else {
+                document.getElementById('my-portfolio').classList.add('hidden');
+                document.getElementById('shared-portfolio').classList.remove('hidden');
+            }
+        }
+
+        async function loadMovies() {
+            try {
+                const moviesResponse = await fetch(`/api/user/${userId}/movies`);
+                const moviesData = await moviesResponse.json();
+
+                const statsResponse = await fetch(`/api/user/${userId}/stats`);
+                const statsData = await statsResponse.json();
+
+                document.getElementById('total').textContent = statsData.total;
+                document.getElementById('avgRating').textContent = statsData.average_rating;
+
+                allMovies = moviesData.movies;
+                displayMovies(allMovies);
+
+            } catch (error) {
+                console.error('Error loading movies:', error);
+                document.getElementById('content').innerHTML = `
+                    <div class="empty">
+                        <div class="empty-text">Ошибка загрузки</div>
+                    </div>
+                `;
+            }
+        }
+
+        function filterMovies(type) {
+            currentFilter = type;
+
+            // Обновляем активную вкладку фильтра
+            document.querySelectorAll('.filter-tab').forEach(tab => {
+                tab.classList.remove('active');
+            });
+            event.target.classList.add('active');
+
+            // Фильтруем фильмы
+            let filtered = allMovies;
+            if (type !== 'all') {
+                filtered = allMovies.filter(m => m.type === type);
+            }
+
+            displayMovies(filtered);
+        }
+
+        function displayMovies(movies) {
+            const content = document.getElementById('content');
+
+            if (movies.length === 0) {
+                content.innerHTML = `
+                    <div class="empty">
+                        <div class="empty-icon">🎬</div>
+                        <div class="empty-text">Пока нет фильмов<br>Добавь первый через бота!</div>
+                    </div>
+                `;
+                return;
+            }
+
+            const moviesHTML = movies.map(movie => `
+                <div class="movie-card" onclick="showMovie(${movie.id})">
+                    <img class="movie-poster"
+                         src="${movie.poster_url || '/static/no-poster.png'}"
+                         alt="${movie.title}"
+                         onerror="this.src='/static/no-poster.png'">
+                    <div class="movie-info">
+                        <div class="movie-title">${movie.title}</div>
+                        <div class="movie-rating">⭐ ${movie.rating}/10</div>
+                        ${movie.year ? `<div class="movie-year">${movie.year}</div>` : ''}
+                    </div>
+                </div>
+            `).join('');
+
+            content.innerHTML = `<div class="movies-grid">${moviesHTML}</div>`;
+        }
+
+        function showMovie(movieId) {
+            tg.showAlert(`Фильм ID: ${movieId}`);
+        }
+
+        function createSharedPortfolio() {
+            const shareUrl = `https://t.me/share/url?url=${encodeURIComponent(window.location.origin + '/shared?user=' + userId)}`;
+            document.getElementById('shared-link').textContent = shareUrl;
+            document.getElementById('shared-link-container').classList.remove('hidden');
+        }
+
+        function sendSharedLink() {
+            const shareUrl = `${window.location.origin}/shared?user=${userId}`;
+            tg.openTelegramLink(`https://t.me/share/url?url=${encodeURIComponent(shareUrl)}&text=${encodeURIComponent('Смотри мое портфолио фильмов!')}`);
+        }
+
+        loadMovies();
+    </script>
+</body>
+</html>
