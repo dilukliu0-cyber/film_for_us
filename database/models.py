@@ -56,3 +56,16 @@ class Portfolio(Base):
     # Связи
     users = relationship("User", secondary=shared_portfolios, back_populates="portfolios")
     movies = relationship("Movie", back_populates="portfolio")
+
+class EpisodeRating(Base):
+    __tablename__ = 'episode_ratings'
+
+    id = Column(Integer, primary_key=True)
+    user_id = Column(Integer, ForeignKey('users.id'), nullable=False)
+    tmdb_id = Column(Integer, nullable=False)
+    season = Column(Integer, nullable=False)
+    episode = Column(Integer, nullable=False)
+    rating = Column(Integer, nullable=False)
+    created_at = Column(DateTime, default=datetime.utcnow)
+
+    user = relationship("User", back_populates="episode_ratings")

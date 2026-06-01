@@ -4,14 +4,19 @@ from fastapi.responses import HTMLResponse, FileResponse
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select
 from pydantic import BaseModel
-from typing import Optional
+from typing import Optional, List
 import sys
 import os
+import requests
 
 sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
 from database.database import get_session, init_db
-from database.models import User, Movie, Portfolio
+from database.models import User, Movie, Portfolio, EpisodeRating
+
+TMDB_API_KEY = os.getenv("TMDB_API_KEY", "b9f7111dac996c0b5ecc7d34437d1786")
+TMDB_BASE_URL = "https://api.themoviedb.org/3"
+TMDB_IMAGE_BASE = "https://image.tmdb.org/t/p/w500"
 
 class MovieCreate(BaseModel):
     user_id: int
@@ -38,10 +43,113 @@ async def root():
 
 @app.get("/miniapp")
 async def miniapp(user_id: int):
-    """Отдаем Mini App"""
-    with open("miniapp/templates/index.html", "r", encoding="utf-8") as f:
+    """Отдаем новый Mini App"""
+    with open("miniapp/templates/index_new.html", "r", encoding="utf-8") as f:
         html_content = f.read()
     return HTMLResponse(content=html_content)
+
+@app.get("/api/search")
+async def search_movies(query: str):
+    """Поиск фильмов через TMDB API"""
+    results = []
+
+    # Поиск фильмов
+    response = requests.get(
+        f"{TMDB_BASE_URL}/search/movie",
+        params={"api_key": TMDB_API_KEY, "query": query, "language": "ru-RU"}
+    )
+    if response.status_code == 200:
+        data = response.json()
+        for item in data['results'][:5]:
+            results.append({
+                "tmdb_id": item['id'],
+                "title": item.get('title', ''),
+                "year": (item.get('release_date', '') or '')[:4],
+                "poster_url": f"{TMDB_IMAGE_BASE}{item['poster_path']}" if item.get('poster_path') else None,
+                "type": "movie"
+            })
+
+    # Поиск сериалов
+    response = requests.get(
+        f"{TMDB_BASE_URL}/search/tv",
+        params={"api_key": TMDB_API_KEY, "query": query, "language": "ru-RU"}
+    )
+    if response.status_code == 200:
+        data = response.json()
+        for item in data['results'][:5]:
+            results.append({
+                "tmdb_id": item['id'],
+                "title": item.get('name', ''),
+                "year": (item.get('first_air_date', '') or '')[:4],
+                "poster_url": f"{TMDB_IMAGE_BASE}{item['poster_path']}" if item.get('poster_path') else None,
+                "type": "tv"
+            })
+
+    return {"results": results}
+
+@app.get("/api/episodes/{tmdb_id}")
+async def get_episodes(tmdb_id: int):
+    """Получить информацию о сезонах и сериях"""
+    response = requests.get(
+        f"{TMDB_BASE_URL}/tv/{tmdb_id}",
+        params={"api_key": TMDB_API_KEY, "language": "ru-RU"}
+    )
+
+    if response.status_code != 200:
+        raise HTTPException(status_code=404, detail="TV show not found")
+
+    data = response.json()
+
+    return {
+        "tmdb_id": tmdb_id,
+        "title": data.get('name', ''),
+        "seasons": [
+            {
+                "season_number": season['season_number'],
+                "episode_count": season['episode_count']
+            }
+            for season in data.get('seasons', [])
+            if season['season_number'] > 0  # Пропускаем "Сезон 0" (спецвыпуски)
+        ]
+    }
+
+class EpisodeRatingData(BaseModel):
+    user_id: int
+    tmdb_id: int
+    season: int
+    episode: int
+    rating: int
+
+@app.post("/api/episode-rating")
+async def save_episode_rating(rating_data: EpisodeRatingData, session: AsyncSession = Depends(get_session)):
+    """Сохранить оценку серии"""
+    # Проверяем есть ли уже оценка
+    result = await session.execute(
+        select(EpisodeRating).where(
+            EpisodeRating.user_id == rating_data.user_id,
+            EpisodeRating.tmdb_id == rating_data.tmdb_id,
+            EpisodeRating.season == rating_data.season,
+            EpisodeRating.episode == rating_data.episode
+        )
+    )
+    existing = result.scalar_one_or_none()
+
+    if existing:
+        # Обновляем существующую оценку
+        existing.rating = rating_data.rating
+    else:
+        # Создаем новую оценку
+        new_rating = EpisodeRating(
+            user_id=rating_data.user_id,
+            tmdb_id=rating_data.tmdb_id,
+            season=rating_data.season,
+            episode=rating_data.episode,
+            rating=rating_data.rating
+        )
+        session.add(new_rating)
+
+    await session.commit()
+    return {"message": "Rating saved"}
 
 @app.post("/api/movies")
 async def create_movie(movie_data: MovieCreate, session: AsyncSession = Depends(get_session)):
