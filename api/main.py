@@ -26,6 +26,7 @@ class MovieCreate(BaseModel):
     poster_url: Optional[str] = None
     tmdb_id: Optional[int] = None
     year: Optional[int] = None
+    review: Optional[str] = None
 
 app = FastAPI(title="Movie Bot API")
 
@@ -47,6 +48,36 @@ async def miniapp(user_id: int):
     with open("miniapp/templates/index_new.html", "r", encoding="utf-8") as f:
         html_content = f.read()
     return HTMLResponse(content=html_content)
+
+@app.get("/api/movie-details/{tmdb_id}")
+async def get_movie_details(tmdb_id: int):
+    """Получить детальную информацию о фильме"""
+    response = requests.get(
+        f"{TMDB_BASE_URL}/movie/{tmdb_id}",
+        params={"api_key": TMDB_API_KEY, "language": "ru-RU", "append_to_response": "credits"}
+    )
+
+    if response.status_code != 200:
+        raise HTTPException(status_code=404, detail="Movie not found")
+
+    data = response.json()
+
+    # Ищем режиссера
+    director = None
+    if 'credits' in data and 'crew' in data['credits']:
+        for person in data['credits']['crew']:
+            if person.get('job') == 'Director':
+                director = person.get('name')
+                break
+
+    return {
+        "tmdb_id": tmdb_id,
+        "title": data.get('title', ''),
+        "year": (data.get('release_date', '') or '')[:4],
+        "poster_url": f"{TMDB_IMAGE_BASE}{data['poster_path']}" if data.get('poster_path') else None,
+        "overview": data.get('overview', ''),
+        "director": director
+    }
 
 @app.get("/api/search")
 async def search_movies(query: str):
@@ -169,7 +200,8 @@ async def create_movie(movie_data: MovieCreate, session: AsyncSession = Depends(
         movie_type=movie_data.movie_type,
         poster_url=movie_data.poster_url,
         tmdb_id=movie_data.tmdb_id,
-        year=movie_data.year
+        year=movie_data.year,
+        review=movie_data.review
     )
     session.add(movie)
     await session.commit()

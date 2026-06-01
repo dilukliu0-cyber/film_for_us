@@ -307,6 +307,101 @@
             padding: 40px;
             opacity: 0.6;
         }
+
+        /* Карточка фильма для оценки */
+        .movie-details {
+            margin-bottom: 20px;
+        }
+
+        .movie-poster-large {
+            width: 100%;
+            max-width: 300px;
+            border-radius: 12px;
+            margin: 0 auto 16px;
+            display: block;
+        }
+
+        .movie-meta {
+            margin-bottom: 16px;
+        }
+
+        .movie-director {
+            font-size: 14px;
+            opacity: 0.7;
+            margin-bottom: 8px;
+        }
+
+        .movie-overview {
+            font-size: 14px;
+            line-height: 1.5;
+            margin-bottom: 16px;
+            opacity: 0.8;
+        }
+
+        .stars-rating {
+            display: flex;
+            gap: 8px;
+            justify-content: center;
+            margin: 20px 0;
+        }
+
+        .star {
+            font-size: 32px;
+            cursor: pointer;
+            transition: transform 0.2s;
+            user-select: none;
+        }
+
+        .star:active {
+            transform: scale(0.9);
+        }
+
+        .star.filled {
+            color: #ffd700;
+        }
+
+        .star.empty {
+            color: #ddd;
+        }
+
+        .review-input {
+            width: 100%;
+            min-height: 100px;
+            padding: 12px;
+            border: 1px solid var(--tg-theme-secondary-bg-color, #e0e0e0);
+            border-radius: 12px;
+            font-size: 14px;
+            font-family: inherit;
+            background: var(--tg-theme-secondary-bg-color, #f5f5f5);
+            color: var(--tg-theme-text-color, #000);
+            resize: vertical;
+            margin-bottom: 16px;
+        }
+
+        .save-btn {
+            width: 100%;
+            padding: 16px;
+            background: var(--tg-theme-button-color, #3390ec);
+            color: white;
+            border: none;
+            border-radius: 12px;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: opacity 0.2s;
+        }
+
+        .save-btn:active {
+            opacity: 0.8;
+        }
+
+        .rating-display {
+            text-align: center;
+            font-size: 18px;
+            font-weight: 600;
+            color: var(--tg-theme-button-color, #3390ec);
+            margin-bottom: 16px;
+        }
     </style>
 </head>
 <body>
@@ -341,6 +436,17 @@
                 <div class="close-btn" onclick="closeModal()">&times;</div>
             </div>
             <div id="episodesContainer"></div>
+        </div>
+    </div>
+
+    <!-- Модальное окно для оценки фильма -->
+    <div class="modal" id="movieRatingModal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <div class="modal-title" id="ratingModalTitle"></div>
+                <div class="close-btn" onclick="closeRatingModal()">&times;</div>
+            </div>
+            <div class="movie-details" id="movieDetailsContainer"></div>
         </div>
     </div>
 
@@ -420,9 +526,104 @@
             if (type === 'tv') {
                 await loadEpisodes(tmdbId);
             } else {
-                // Для фильма просто добавляем
-                tg.showAlert('Добавить фильм с оценкой через бота');
+                // Для фильма открываем карточку с оценкой
+                await loadMovieDetails(tmdbId);
             }
+        }
+
+        async function loadMovieDetails(tmdbId) {
+            try {
+                const response = await fetch(`/api/movie-details/${tmdbId}`);
+                const data = await response.json();
+
+                currentMovie = data;
+                document.getElementById('ratingModalTitle').textContent = data.title;
+
+                const container = document.getElementById('movieDetailsContainer');
+                container.innerHTML = `
+                    <img class="movie-poster-large"
+                         src="${data.poster_url || '/static/no-poster.png'}"
+                         onerror="this.src='/static/no-poster.png'">
+
+                    <div class="movie-meta">
+                        ${data.director ? `<div class="movie-director">Режиссер: ${data.director}</div>` : ''}
+                        ${data.year ? `<div class="movie-director">Год: ${data.year}</div>` : ''}
+                    </div>
+
+                    ${data.overview ? `<div class="movie-overview">${data.overview}</div>` : ''}
+
+                    <div class="rating-display">Оценка: <span id="currentRating">0</span>/10</div>
+
+                    <div class="stars-rating" id="starsContainer">
+                        ${Array.from({length: 10}, (_, i) => `
+                            <span class="star empty" data-rating="${i + 1}" onclick="setRating(${i + 1})">★</span>
+                        `).join('')}
+                    </div>
+
+                    <textarea class="review-input"
+                              id="reviewText"
+                              placeholder="Напиши отзыв (необязательно)..."></textarea>
+
+                    <button class="save-btn" onclick="saveMovieRating()">Сохранить</button>
+                `;
+
+                document.getElementById('movieRatingModal').classList.add('active');
+            } catch (error) {
+                console.error('Load movie details error:', error);
+            }
+        }
+
+        function setRating(rating) {
+            document.getElementById('currentRating').textContent = rating;
+
+            const stars = document.querySelectorAll('.star');
+            stars.forEach((star, index) => {
+                if (index < rating) {
+                    star.classList.remove('empty');
+                    star.classList.add('filled');
+                } else {
+                    star.classList.remove('filled');
+                    star.classList.add('empty');
+                }
+            });
+        }
+
+        async function saveMovieRating() {
+            const rating = parseInt(document.getElementById('currentRating').textContent);
+            const review = document.getElementById('reviewText').value;
+
+            if (rating === 0) {
+                tg.showAlert('Поставь оценку!');
+                return;
+            }
+
+            try {
+                await fetch('/api/movies', {
+                    method: 'POST',
+                    headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify({
+                        user_id: userId,
+                        title: currentMovie.title,
+                        rating: rating,
+                        movie_type: 'movie',
+                        poster_url: currentMovie.poster_url,
+                        tmdb_id: currentMovie.tmdb_id,
+                        year: currentMovie.year,
+                        review: review
+                    })
+                });
+
+                closeRatingModal();
+                tg.showAlert('Фильм добавлен!');
+                loadMovies(); // Перезагружаем список
+            } catch (error) {
+                console.error('Save movie error:', error);
+                tg.showAlert('Ошибка при сохранении');
+            }
+        }
+
+        function closeRatingModal() {
+            document.getElementById('movieRatingModal').classList.remove('active');
         }
 
         async function loadEpisodes(tmdbId) {

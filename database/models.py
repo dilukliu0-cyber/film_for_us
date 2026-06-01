@@ -69,3 +69,4 @@ class EpisodeRating(Base):
     created_at = Column(DateTime, default=datetime.utcnow)
 
     user = relationship("User", back_populates="episode_ratings")
+    review = Column(String, nullable=True)  # Текстовый отзыв
