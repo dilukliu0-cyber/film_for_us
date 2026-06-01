@@ -2,7 +2,7 @@
 <html lang="ru">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>Портфолио фильмов</title>
     <script src="https://telegram.org/js/telegram-web-app.js"></script>
     <style>
@@ -10,52 +10,56 @@
             margin: 0;
             padding: 0;
             box-sizing: border-box;
+            -webkit-tap-highlight-color: transparent;
         }
 
         body {
             font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-            background: var(--tg-theme-bg-color, #ffffff);
-            color: var(--tg-theme-text-color, #000000);
-            padding-bottom: 60px;
+            background: var(--tg-theme-bg-color, #0a0a0a);
+            color: var(--tg-theme-text-color, #ffffff);
+            overflow: hidden;
+            height: 100vh;
+        }
+
+        .container {
+            height: 100vh;
+            display: flex;
+            flex-direction: column;
         }
 
         /* Поиск */
-        .search-container {
-            position: sticky;
-            top: 0;
-            background: var(--tg-theme-bg-color, #ffffff);
-            padding: 12px 16px;
-            border-bottom: 1px solid var(--tg-theme-secondary-bg-color, #f0f0f0);
-            z-index: 100;
-        }
-
-        .search-box {
-            position: relative;
+        .search-bar {
+            padding: 16px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
         }
 
         .search-input {
             width: 100%;
-            padding: 12px 16px;
-            border: 1px solid var(--tg-theme-secondary-bg-color, #e0e0e0);
-            border-radius: 12px;
+            padding: 14px 20px;
+            border: none;
+            border-radius: 25px;
             font-size: 16px;
-            background: var(--tg-theme-secondary-bg-color, #f5f5f5);
-            color: var(--tg-theme-text-color, #000000);
+            background: rgba(255,255,255,0.95);
+            color: #000;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.2);
+        }
+
+        .search-input::placeholder {
+            color: #999;
         }
 
         .search-results {
             position: absolute;
-            top: 100%;
-            left: 0;
-            right: 0;
-            background: var(--tg-theme-bg-color, #ffffff);
-            border: 1px solid var(--tg-theme-secondary-bg-color, #e0e0e0);
-            border-radius: 12px;
-            margin-top: 8px;
-            max-height: 400px;
+            top: 70px;
+            left: 16px;
+            right: 16px;
+            background: #1a1a1a;
+            border-radius: 16px;
+            max-height: 60vh;
             overflow-y: auto;
             display: none;
-            box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+            z-index: 1000;
+            box-shadow: 0 8px 32px rgba(0,0,0,0.4);
         }
 
         .search-results.active {
@@ -67,15 +71,11 @@
             gap: 12px;
             padding: 12px;
             cursor: pointer;
-            border-bottom: 1px solid var(--tg-theme-secondary-bg-color, #f0f0f0);
+            border-bottom: 1px solid #2a2a2a;
         }
 
         .search-item:hover {
-            background: var(--tg-theme-secondary-bg-color, #f5f5f5);
-        }
-
-        .search-item:last-child {
-            border-bottom: none;
+            background: #2a2a2a;
         }
 
         .search-poster {
@@ -83,11 +83,14 @@
             height: 75px;
             object-fit: cover;
             border-radius: 8px;
-            background: #ddd;
+            background: #333;
         }
 
         .search-info {
             flex: 1;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
         }
 
         .search-title {
@@ -96,52 +99,30 @@
         }
 
         .search-year {
-            font-size: 14px;
+            font-size: 13px;
             opacity: 0.6;
-        }
-
-        /* Табы */
-        .main-tabs {
-            display: flex;
-            border-bottom: 2px solid var(--tg-theme-secondary-bg-color, #f0f0f0);
-            background: var(--tg-theme-bg-color, #ffffff);
-            position: sticky;
-            top: 65px;
-            z-index: 99;
-        }
-
-        .main-tab {
-            flex: 1;
-            padding: 16px;
-            text-align: center;
-            font-weight: 600;
-            cursor: pointer;
-            border-bottom: 3px solid transparent;
-            transition: all 0.2s;
-        }
-
-        .main-tab.active {
-            border-bottom-color: var(--tg-theme-button-color, #3390ec);
-            color: var(--tg-theme-button-color, #3390ec);
         }
 
         /* Контент */
         .content {
+            flex: 1;
+            overflow-y: auto;
             padding: 16px;
         }
 
         .movies-grid {
             display: grid;
-            grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
-            gap: 16px;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 12px;
         }
 
         .movie-card {
-            background: var(--tg-theme-secondary-bg-color, #f0f0f0);
+            background: #1a1a1a;
             border-radius: 12px;
             overflow: hidden;
             cursor: pointer;
             transition: transform 0.2s;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.3);
         }
 
         .movie-card:active {
@@ -152,15 +133,15 @@
             width: 100%;
             aspect-ratio: 2/3;
             object-fit: cover;
-            background: #ddd;
+            background: #333;
         }
 
         .movie-info {
-            padding: 12px;
+            padding: 8px;
         }
 
         .movie-title {
-            font-size: 14px;
+            font-size: 12px;
             font-weight: 600;
             margin-bottom: 4px;
             overflow: hidden;
@@ -169,12 +150,14 @@
         }
 
         .movie-rating {
-            font-size: 16px;
+            font-size: 14px;
             font-weight: 700;
-            color: var(--tg-theme-button-color, #3390ec);
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
         }
 
-        /* Модальное окно для серий */
+        /* Модальное окно */
         .modal {
             display: none;
             position: fixed;
@@ -182,8 +165,8 @@
             left: 0;
             right: 0;
             bottom: 0;
-            background: rgba(0,0,0,0.5);
-            z-index: 1000;
+            background: rgba(0,0,0,0.95);
+            z-index: 2000;
             overflow-y: auto;
         }
 
@@ -192,10 +175,11 @@
         }
 
         .modal-content {
-            background: var(--tg-theme-bg-color, #ffffff);
+            background: linear-gradient(135deg, #1a1a1a 0%, #2a2a2a 100%);
             margin: 20px;
-            border-radius: 16px;
-            padding: 20px;
+            border-radius: 20px;
+            padding: 24px;
+            box-shadow: 0 8px 32px rgba(0,0,0,0.5);
         }
 
         .modal-header {
@@ -206,19 +190,143 @@
         }
 
         .modal-title {
-            font-size: 20px;
+            font-size: 22px;
             font-weight: 700;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
         }
 
         .close-btn {
-            font-size: 24px;
+            font-size: 28px;
             cursor: pointer;
-            padding: 4px 8px;
+            padding: 4px 12px;
+            color: #999;
         }
 
+        .movie-poster-large {
+            width: 100%;
+            max-width: 250px;
+            border-radius: 16px;
+            margin: 0 auto 20px;
+            display: block;
+            box-shadow: 0 8px 24px rgba(0,0,0,0.4);
+        }
+
+        .movie-meta {
+            margin-bottom: 16px;
+            text-align: center;
+        }
+
+        .movie-director {
+            font-size: 14px;
+            opacity: 0.7;
+            margin-bottom: 6px;
+        }
+
+        .movie-overview {
+            font-size: 14px;
+            line-height: 1.6;
+            margin-bottom: 20px;
+            opacity: 0.8;
+            text-align: center;
+            max-height: 100px;
+            overflow-y: auto;
+        }
+
+        .stars-rating {
+            display: flex;
+            gap: 6px;
+            justify-content: center;
+            margin: 24px 0;
+        }
+
+        .star {
+            font-size: 28px;
+            cursor: pointer;
+            transition: transform 0.2s;
+            user-select: none;
+        }
+
+        .star:active {
+            transform: scale(0.85);
+        }
+
+        .star.filled {
+            color: #ffd700;
+            text-shadow: 0 0 10px rgba(255,215,0,0.5);
+        }
+
+        .star.empty {
+            color: #444;
+        }
+
+        .rating-display {
+            text-align: center;
+            font-size: 20px;
+            font-weight: 700;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            margin-bottom: 20px;
+        }
+
+        .review-input {
+            width: 100%;
+            min-height: 80px;
+            padding: 14px;
+            border: 2px solid #333;
+            border-radius: 16px;
+            font-size: 14px;
+            font-family: inherit;
+            background: #0a0a0a;
+            color: #fff;
+            resize: none;
+            margin-bottom: 20px;
+        }
+
+        .review-input::placeholder {
+            color: #666;
+        }
+
+        .save-btn {
+            width: 100%;
+            padding: 16px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            border-radius: 16px;
+            font-size: 17px;
+            font-weight: 600;
+            cursor: pointer;
+            box-shadow: 0 4px 15px rgba(102,126,234,0.4);
+        }
+
+        .save-btn:active {
+            transform: scale(0.98);
+        }
+
+        .empty {
+            text-align: center;
+            padding: 60px 20px;
+            opacity: 0.5;
+        }
+
+        .empty-icon {
+            font-size: 64px;
+            margin-bottom: 16px;
+        }
+
+        .loading {
+            text-align: center;
+            padding: 60px 20px;
+            opacity: 0.6;
+        }
+
+        /* Серии для сериалов */
         .episodes-grid {
             display: grid;
-            grid-template-columns: repeat(auto-fill, minmax(60px, 1fr));
+            grid-template-columns: repeat(auto-fill, minmax(50px, 1fr));
             gap: 8px;
             margin-top: 16px;
         }
@@ -228,11 +336,11 @@
             display: flex;
             align-items: center;
             justify-content: center;
-            border-radius: 8px;
+            border-radius: 10px;
             cursor: pointer;
             font-weight: 600;
+            font-size: 14px;
             transition: transform 0.2s;
-            border: 2px solid transparent;
         }
 
         .episode-box:active {
@@ -240,213 +348,70 @@
         }
 
         .episode-box.unrated {
-            background: var(--tg-theme-secondary-bg-color, #e0e0e0);
-            color: var(--tg-theme-text-color, #000);
+            background: #333;
+            color: #fff;
         }
 
         .episode-box.bad {
             background: #ff4444;
             color: white;
+            box-shadow: 0 0 10px rgba(255,68,68,0.3);
         }
 
         .episode-box.poor {
             background: #ff8844;
             color: white;
+            box-shadow: 0 0 10px rgba(255,136,68,0.3);
         }
 
         .episode-box.okay {
             background: #ffbb44;
             color: white;
+            box-shadow: 0 0 10px rgba(255,187,68,0.3);
         }
 
         .episode-box.good {
             background: #88cc44;
             color: white;
+            box-shadow: 0 0 10px rgba(136,204,68,0.3);
         }
 
         .episode-box.great {
             background: #44cc44;
             color: white;
+            box-shadow: 0 0 10px rgba(68,204,68,0.3);
         }
 
-        .rating-selector {
-            display: flex;
-            gap: 8px;
-            margin-top: 16px;
-            padding: 16px;
-            background: var(--tg-theme-secondary-bg-color, #f5f5f5);
-            border-radius: 12px;
-        }
-
-        .rating-option {
-            flex: 1;
-            padding: 12px;
-            border-radius: 8px;
-            text-align: center;
-            cursor: pointer;
-            font-weight: 600;
-            transition: transform 0.2s;
-        }
-
-        .rating-option:active {
-            transform: scale(0.95);
-        }
-
-        .hidden {
-            display: none;
-        }
-
-        .empty {
-            text-align: center;
-            padding: 60px 20px;
-            opacity: 0.6;
-        }
-
-        .loading {
-            text-align: center;
-            padding: 40px;
-            opacity: 0.6;
-        }
-
-        /* Карточка фильма для оценки */
-        .movie-details {
-            margin-bottom: 20px;
-        }
-
-        .movie-poster-large {
-            width: 100%;
-            max-width: 300px;
-            border-radius: 12px;
-            margin: 0 auto 16px;
-            display: block;
-        }
-
-        .movie-meta {
-            margin-bottom: 16px;
-        }
-
-        .movie-director {
-            font-size: 14px;
-            opacity: 0.7;
-            margin-bottom: 8px;
-        }
-
-        .movie-overview {
-            font-size: 14px;
-            line-height: 1.5;
-            margin-bottom: 16px;
-            opacity: 0.8;
-        }
-
-        .stars-rating {
-            display: flex;
-            gap: 8px;
-            justify-content: center;
-            margin: 20px 0;
-        }
-
-        .star {
-            font-size: 32px;
-            cursor: pointer;
-            transition: transform 0.2s;
-            user-select: none;
-        }
-
-        .star:active {
-            transform: scale(0.9);
-        }
-
-        .star.filled {
-            color: #ffd700;
-        }
-
-        .star.empty {
-            color: #ddd;
-        }
-
-        .review-input {
-            width: 100%;
-            min-height: 100px;
-            padding: 12px;
-            border: 1px solid var(--tg-theme-secondary-bg-color, #e0e0e0);
-            border-radius: 12px;
-            font-size: 14px;
-            font-family: inherit;
-            background: var(--tg-theme-secondary-bg-color, #f5f5f5);
-            color: var(--tg-theme-text-color, #000);
-            resize: vertical;
-            margin-bottom: 16px;
-        }
-
-        .save-btn {
-            width: 100%;
-            padding: 16px;
-            background: var(--tg-theme-button-color, #3390ec);
-            color: white;
-            border: none;
-            border-radius: 12px;
+        .season-title {
+            margin: 20px 0 12px;
             font-size: 16px;
             font-weight: 600;
-            cursor: pointer;
-            transition: opacity 0.2s;
-        }
-
-        .save-btn:active {
-            opacity: 0.8;
-        }
-
-        .rating-display {
-            text-align: center;
-            font-size: 18px;
-            font-weight: 600;
-            color: var(--tg-theme-button-color, #3390ec);
-            margin-bottom: 16px;
+            opacity: 0.9;
         }
     </style>
 </head>
 <body>
-    <!-- Поиск -->
-    <div class="search-container">
-        <div class="search-box">
-            <input type="text" class="search-input" placeholder="Поиск фильмов..." id="searchInput">
+    <div class="container">
+        <!-- Поиск -->
+        <div class="search-bar">
+            <input type="text" class="search-input" placeholder="🔍 Найти фильм или сериал..." id="searchInput">
             <div class="search-results" id="searchResults"></div>
+        </div>
+
+        <!-- Контент -->
+        <div class="content" id="content">
+            <div class="loading">Загрузка...</div>
         </div>
     </div>
 
-    <!-- Табы -->
-    <div class="main-tabs">
-        <div class="main-tab active" onclick="switchTab('my')">Мое</div>
-        <div class="main-tab" onclick="switchTab('coming')">Еще выйдет</div>
-    </div>
-
-    <!-- Контент -->
-    <div id="myTab" class="content">
-        <div class="loading">Загрузка...</div>
-    </div>
-
-    <div id="comingTab" class="content hidden">
-        <div class="empty">Здесь будут фильмы и сериалы<br>которые еще выйдут</div>
-    </div>
-
-    <!-- Модальное окно для серий -->
-    <div class="modal" id="episodesModal">
+    <!-- Модальное окно -->
+    <div class="modal" id="movieModal">
         <div class="modal-content">
             <div class="modal-header">
                 <div class="modal-title" id="modalTitle"></div>
                 <div class="close-btn" onclick="closeModal()">&times;</div>
             </div>
-            <div id="episodesContainer"></div>
-        </div>
-    </div>
-
-    <!-- Модальное окно для оценки фильма -->
-    <div class="modal" id="movieRatingModal">
-        <div class="modal-content">
-            <div class="modal-header">
-                <div class="modal-title" id="ratingModalTitle"></div>
-                <div class="close-btn" onclick="closeRatingModal()">&times;</div>
-            </div>
-            <div class="movie-details" id="movieDetailsContainer"></div>
+            <div id="modalContainer"></div>
         </div>
     </div>
 
@@ -461,31 +426,13 @@
         let searchTimeout = null;
         let currentMovie = null;
 
-        // Переключение табов
-        function switchTab(tab) {
-            document.querySelectorAll('.main-tab').forEach(t => t.classList.remove('active'));
-            event.target.classList.add('active');
-
-            if (tab === 'my') {
-                document.getElementById('myTab').classList.remove('hidden');
-                document.getElementById('comingTab').classList.add('hidden');
-            } else {
-                document.getElementById('myTab').classList.add('hidden');
-                document.getElementById('comingTab').classList.remove('hidden');
-            }
-        }
-
-        // Поиск фильмов
         document.getElementById('searchInput').addEventListener('input', (e) => {
             const query = e.target.value.trim();
-
             if (searchTimeout) clearTimeout(searchTimeout);
-
             if (query.length < 2) {
                 document.getElementById('searchResults').classList.remove('active');
                 return;
             }
-
             searchTimeout = setTimeout(() => searchMovies(query), 300);
         });
 
@@ -493,15 +440,12 @@
             try {
                 const response = await fetch(`/api/search?query=${encodeURIComponent(query)}`);
                 const data = await response.json();
-
                 const resultsDiv = document.getElementById('searchResults');
 
                 if (data.results && data.results.length > 0) {
                     resultsDiv.innerHTML = data.results.map(movie => `
-                        <div class="search-item" onclick="addMovie(${movie.tmdb_id}, '${movie.type}')">
-                            <img class="search-poster"
-                                 src="${movie.poster_url || '/static/no-poster.png'}"
-                                 onerror="this.src='/static/no-poster.png'">
+                        <div class="search-item" onclick="selectMovie(${movie.tmdb_id}, '${movie.type}', '${movie.title.replace(/'/g, "\\'")}')">
+                            <img class="search-poster" src="${movie.poster_url || '/static/no-poster.png'}" onerror="this.src='/static/no-poster.png'">
                             <div class="search-info">
                                 <div class="search-title">${movie.title}</div>
                                 <div class="search-year">${movie.year || ''}</div>
@@ -518,15 +462,12 @@
             }
         }
 
-        async function addMovie(tmdbId, type) {
+        async function selectMovie(tmdbId, type, title) {
             document.getElementById('searchResults').classList.remove('active');
             document.getElementById('searchInput').value = '';
-
-            // Если это сериал - открываем модалку с сезонами/сериями
             if (type === 'tv') {
-                await loadEpisodes(tmdbId);
+                await loadEpisodes(tmdbId, title);
             } else {
-                // Для фильма открываем карточку с оценкой
                 await loadMovieDetails(tmdbId);
             }
         }
@@ -535,49 +476,53 @@
             try {
                 const response = await fetch(`/api/movie-details/${tmdbId}`);
                 const data = await response.json();
-
                 currentMovie = data;
-                document.getElementById('ratingModalTitle').textContent = data.title;
+                document.getElementById('modalTitle').textContent = data.title;
 
-                const container = document.getElementById('movieDetailsContainer');
-                container.innerHTML = `
-                    <img class="movie-poster-large"
-                         src="${data.poster_url || '/static/no-poster.png'}"
-                         onerror="this.src='/static/no-poster.png'">
-
+                document.getElementById('modalContainer').innerHTML = `
+                    <img class="movie-poster-large" src="${data.poster_url || '/static/no-poster.png'}" onerror="this.src='/static/no-poster.png'">
                     <div class="movie-meta">
                         ${data.director ? `<div class="movie-director">Режиссер: ${data.director}</div>` : ''}
                         ${data.year ? `<div class="movie-director">Год: ${data.year}</div>` : ''}
                     </div>
-
                     ${data.overview ? `<div class="movie-overview">${data.overview}</div>` : ''}
-
                     <div class="rating-display">Оценка: <span id="currentRating">0</span>/10</div>
-
-                    <div class="stars-rating" id="starsContainer">
-                        ${Array.from({length: 10}, (_, i) => `
-                            <span class="star empty" data-rating="${i + 1}" onclick="setRating(${i + 1})">★</span>
-                        `).join('')}
+                    <div class="stars-rating">
+                        ${Array.from({length: 10}, (_, i) => `<span class="star empty" onclick="setRating(${i + 1})">★</span>`).join('')}
                     </div>
-
-                    <textarea class="review-input"
-                              id="reviewText"
-                              placeholder="Напиши отзыв (необязательно)..."></textarea>
-
+                    <textarea class="review-input" id="reviewText" placeholder="Напиши отзыв (необязательно)..."></textarea>
                     <button class="save-btn" onclick="saveMovieRating()">Сохранить</button>
                 `;
-
-                document.getElementById('movieRatingModal').classList.add('active');
+                document.getElementById('movieModal').classList.add('active');
             } catch (error) {
-                console.error('Load movie details error:', error);
+                console.error('Load movie error:', error);
+            }
+        }
+
+        async function loadEpisodes(tmdbId, title) {
+            try {
+                const response = await fetch(`/api/episodes/${tmdbId}`);
+                const data = await response.json();
+                currentMovie = {tmdb_id: tmdbId, title: title, type: 'tv'};
+                document.getElementById('modalTitle').textContent = title;
+
+                document.getElementById('modalContainer').innerHTML = data.seasons.map(season => `
+                    <div class="season-title">Сезон ${season.season_number}</div>
+                    <div class="episodes-grid">
+                        ${Array.from({length: season.episode_count}, (_, i) => `
+                            <div class="episode-box unrated" data-season="${season.season_number}" data-episode="${i + 1}" onclick="rateEpisode(${season.season_number}, ${i + 1})">${i + 1}</div>
+                        `).join('')}
+                    </div>
+                `).join('');
+                document.getElementById('movieModal').classList.add('active');
+            } catch (error) {
+                console.error('Load episodes error:', error);
             }
         }
 
         function setRating(rating) {
             document.getElementById('currentRating').textContent = rating;
-
-            const stars = document.querySelectorAll('.star');
-            stars.forEach((star, index) => {
+            document.querySelectorAll('.star').forEach((star, index) => {
                 if (index < rating) {
                     star.classList.remove('empty');
                     star.classList.add('filled');
@@ -591,12 +536,10 @@
         async function saveMovieRating() {
             const rating = parseInt(document.getElementById('currentRating').textContent);
             const review = document.getElementById('reviewText').value;
-
             if (rating === 0) {
                 tg.showAlert('Поставь оценку!');
                 return;
             }
-
             try {
                 await fetch('/api/movies', {
                     method: 'POST',
@@ -612,58 +555,19 @@
                         review: review
                     })
                 });
-
-                closeRatingModal();
+                closeModal();
                 tg.showAlert('Фильм добавлен!');
-                loadMovies(); // Перезагружаем список
+                loadMovies();
             } catch (error) {
-                console.error('Save movie error:', error);
+                console.error('Save error:', error);
                 tg.showAlert('Ошибка при сохранении');
-            }
-        }
-
-        function closeRatingModal() {
-            document.getElementById('movieRatingModal').classList.remove('active');
-        }
-
-        async function loadEpisodes(tmdbId) {
-            try {
-                const response = await fetch(`/api/episodes/${tmdbId}`);
-                const data = await response.json();
-
-                currentMovie = data;
-                document.getElementById('modalTitle').textContent = data.title;
-
-                const container = document.getElementById('episodesContainer');
-                container.innerHTML = data.seasons.map(season => `
-                    <div style="margin-bottom: 24px;">
-                        <h3 style="margin-bottom: 12px;">Сезон ${season.season_number}</h3>
-                        <div class="episodes-grid">
-                            ${Array.from({length: season.episode_count}, (_, i) => `
-                                <div class="episode-box unrated"
-                                     data-season="${season.season_number}"
-                                     data-episode="${i + 1}"
-                                     onclick="rateEpisode(${season.season_number}, ${i + 1})">
-                                    ${i + 1}
-                                </div>
-                            `).join('')}
-                        </div>
-                    </div>
-                `).join('');
-
-                document.getElementById('episodesModal').classList.add('active');
-            } catch (error) {
-                console.error('Load episodes error:', error);
             }
         }
 
         function rateEpisode(season, episode) {
             const box = document.querySelector(`[data-season="${season}"][data-episode="${episode}"]`);
-
-            // Циклически меняем оценку: unrated -> bad -> poor -> okay -> good -> great -> unrated
             const ratings = ['unrated', 'bad', 'poor', 'okay', 'good', 'great'];
             let currentIndex = 0;
-
             for (let i = 0; i < ratings.length; i++) {
                 if (box.classList.contains(ratings[i])) {
                     currentIndex = i;
@@ -671,11 +575,8 @@
                     break;
                 }
             }
-
             const nextIndex = (currentIndex + 1) % ratings.length;
             box.classList.add(ratings[nextIndex]);
-
-            // Сохраняем оценку
             saveEpisodeRating(season, episode, nextIndex);
         }
 
@@ -698,15 +599,13 @@
         }
 
         function closeModal() {
-            document.getElementById('episodesModal').classList.remove('active');
+            document.getElementById('movieModal').classList.remove('active');
         }
 
-        // Загрузка портфолио
         async function loadMovies() {
             try {
                 const response = await fetch(`/api/user/${userId}/movies`);
                 const data = await response.json();
-
                 allMovies = data.movies;
                 displayMovies(allMovies);
             } catch (error) {
@@ -715,36 +614,30 @@
         }
 
         function displayMovies(movies) {
-            const container = document.getElementById('myTab');
-
+            const container = document.getElementById('content');
             if (movies.length === 0) {
-                container.innerHTML = '<div class="empty">Пока нет фильмов<br>Найди через поиск!</div>';
+                container.innerHTML = `<div class="empty"><div class="empty-icon">🎬</div><div>Найди свой первый фильм!</div></div>`;
                 return;
             }
-
-            const html = `
+            container.innerHTML = `
                 <div class="movies-grid">
                     ${movies.map(movie => `
                         <div class="movie-card" onclick="showMovie(${movie.id})">
-                            <img class="movie-poster"
-                                 src="${movie.poster_url || '/static/no-poster.png'}"
-                                 onerror="this.src='/static/no-poster.png'">
+                            <img class="movie-poster" src="${movie.poster_url || '/static/no-poster.png'}" onerror="this.src='/static/no-poster.png'">
                             <div class="movie-info">
                                 <div class="movie-title">${movie.title}</div>
-                                <div class="movie-rating">⭐ ${movie.rating}/10</div>
+                                <div class="movie-rating">⭐ ${movie.rating}</div>
                             </div>
                         </div>
                     `).join('')}
                 </div>
             `;
-
-            container.innerHTML = html;
         }
 
         function showMovie(movieId) {
             const movie = allMovies.find(m => m.id === movieId);
             if (movie && movie.type === 'tv') {
-                loadEpisodes(movie.tmdb_id);
+                loadEpisodes(movie.tmdb_id, movie.title);
             }
         }
 

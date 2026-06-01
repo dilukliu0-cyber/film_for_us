@@ -8,7 +8,7 @@ from rapidfuzz import fuzz, process
 
 load_dotenv()
 
-VERSION = "2.4"  # Версия бота
+VERSION = "2.6"  # Версия бота
 
 TELEGRAM_BOT_TOKEN = os.getenv("TELEGRAM_BOT_TOKEN")
 TMDB_API_KEY = os.getenv("TMDB_API_KEY")
